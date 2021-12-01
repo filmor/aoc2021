@@ -1,0 +1,9 @@
+[package]
+name = "aoc2021"
+version = "0.1.0"
+authors = ["Benedikt Reinartz <filmor@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+aoc-runner-derive = "0.3"
+aoc-runner = "0.3"

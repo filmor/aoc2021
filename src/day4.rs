@@ -77,7 +77,7 @@ impl Game {
         GameState {
             game: self,
             round: 0,
-            states: vec![BoardState::new(); self.boards.len()],
+            states: self.boards.iter().map(BoardState::new).collect(),
         }
     }
 }
@@ -85,16 +85,6 @@ impl Game {
 struct Board([Number; 25]);
 
 impl Board {
-    fn sum_unmarked(&self, state: &BoardState) -> u32 {
-        let mut res = 0;
-        for i in 0..25 {
-            if 1 << i & state.0 == 0 {
-                res += self.0[i] as u32;
-            }
-        }
-        res
-    }
-
     fn try_from_iter(it: &mut impl Iterator<Item = Number>) -> Option<Board> {
         let mut res = Board([0; 25]);
         for i in 0..25 {
@@ -126,7 +116,7 @@ impl Display for Board {
 struct GameState<'a> {
     game: &'a Game,
     round: usize,
-    states: Vec<BoardState>,
+    states: Vec<BoardState<'a>>,
 }
 
 impl GameState<'_> {
@@ -143,7 +133,7 @@ impl GameState<'_> {
                         winners.push(Winner {
                             board: b,
                             bingo: bingo,
-                            score: board.sum_unmarked(state) * *draw as u32,
+                            score: state.sum_unmarked() * *draw as u32,
                         });
                     }
                 }
@@ -174,15 +164,31 @@ struct Winner {
 }
 
 #[derive(Clone, Copy)]
-struct BoardState(u32);
+struct BoardState<'a> {
+	state: u32,
+	board: &'a Board,
+}
 
-impl BoardState {
-    fn new() -> Self {
-        BoardState(0)
+impl BoardState<'_> {
+    fn new<'a>(board: &'a Board) -> BoardState<'a> {
+        BoardState{ 
+			state: 0,
+			board
+		}
+    }
+
+    fn sum_unmarked(&self) -> u32 {
+        let mut res = 0;
+        for i in 0..25 {
+            if 1 << i & self.state == 0 {
+                res += self.board.0[i] as u32;
+            }
+        }
+        res
     }
 
     fn set(&mut self, n: usize) -> Option<Bingo> {
-        self.0 |= 1 << n;
+        self.state |= 1 << n;
         let col = n % 5;
         let row = n / 5;
         assert!(self.get(col, row));
@@ -203,7 +209,7 @@ impl BoardState {
     //         | 1 << (2 * 5 + 2)
     //         | 1 << (3 * 5 + 3)
     //         | 1 << (4 * 5 + 4);
-    //     (MASK & self.0 == MASK).then(|| Bingo::Diag)
+    //     (MASK & self.state == MASK).then(|| Bingo::Diag)
     // }
 
     // fn check_antidiag(&self) -> Option<Bingo> {
@@ -212,7 +218,7 @@ impl BoardState {
     //         | 1 << (2 * 5 + 2)
     //         | 1 << (3 * 5 + 1)
     //         | 1 << (4 * 5 + 0);
-    //     (MASK & self.0 == MASK).then(|| Bingo::AntiDiag)
+    //     (MASK & self.state == MASK).then(|| Bingo::AntiDiag)
     // }
 
     const fn check_column(&self, col: usize) -> Option<Bingo> {
@@ -220,7 +226,7 @@ impl BoardState {
         let mask = MASK << col;
         // println!("Col: {}\nVal:  {:025b}\nMask: {:025b}\nComb: {:025b}\n", col, self.0, mask, self.0 & mask);
         // println!("Comb == Mask: {}", self.0 & mask == mask);
-        if mask & self.0 == mask {
+        if mask & self.state == mask {
             Some(Bingo::Column(col))
         } else {
             None
@@ -230,7 +236,7 @@ impl BoardState {
     const fn check_row(&self, row: usize) -> Option<Bingo> {
         const MASK: u32 = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
         let mask = MASK << row * 5;
-        if mask & self.0 == mask {
+        if mask & self.state == mask {
             Some(Bingo::Row(row))
         } else {
             None
@@ -238,11 +244,11 @@ impl BoardState {
     }
 
     const fn get(&self, col: usize, row: usize) -> bool {
-        1 << (row * 5 + col) & self.0 != 0
+        1 << (row * 5 + col) & self.state != 0
     }
 }
 
-impl Display for BoardState {
+impl Display for BoardState<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in 0..5 {
             for col in 0..5 {

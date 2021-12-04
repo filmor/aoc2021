@@ -215,27 +215,29 @@ impl BoardState {
     //     (MASK & self.0 == MASK).then(|| Bingo::AntiDiag)
     // }
 
-    fn check_column(&self, col: usize) -> Option<Bingo> {
-        let mask: u32 = 1 << (0 * 5 + col)
-            | 1 << (1 * 5 + col)
-            | 1 << (2 * 5 + col)
-            | 1 << (3 * 5 + col)
-            | 1 << (4 * 5 + col);
+    const fn check_column(&self, col: usize) -> Option<Bingo> {
+        const MASK: u32 = 1 << 0 * 5 | 1 << 1 * 5 | 1 << 2 * 5 | 1 << 3 * 5 | 1 << 4 * 5;
+        let mask = MASK << col;
         // println!("Col: {}\nVal:  {:025b}\nMask: {:025b}\nComb: {:025b}\n", col, self.0, mask, self.0 & mask);
         // println!("Comb == Mask: {}", self.0 & mask == mask);
-        (mask & self.0 == mask).then(|| Bingo::Column(col))
+        if mask & self.0 == mask {
+            Some(Bingo::Column(col))
+        } else {
+            None
+        }
     }
 
-    fn check_row(&self, row: usize) -> Option<Bingo> {
-        let mask: u32 = 1 << (row * 5 + 0)
-            | 1 << (row * 5 + 1)
-            | 1 << (row * 5 + 2)
-            | 1 << (row * 5 + 3)
-            | 1 << (row * 5 + 4);
-        (mask & self.0 == mask).then(|| Bingo::Row(row))
+    const fn check_row(&self, row: usize) -> Option<Bingo> {
+        const MASK: u32 = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4;
+        let mask = MASK << row * 5;
+        if mask & self.0 == mask {
+            Some(Bingo::Row(row))
+        } else {
+            None
+        }
     }
 
-    fn get(&self, col: usize, row: usize) -> bool {
+    const fn get(&self, col: usize, row: usize) -> bool {
         1 << (row * 5 + col) & self.0 != 0
     }
 }

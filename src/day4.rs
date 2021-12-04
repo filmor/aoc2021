@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fmt::Display, ops::Index};
+use std::{collections::HashSet, fmt::Display};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
@@ -48,15 +48,15 @@ pub fn solve_part1(input: &Game) -> u32 {
 pub fn solve_part2(input: &Game) -> u32 {
     let mut game_state = input.start();
     let count = input.boards.len();
-    let mut all_winners = HashSet::new();
+    let mut all_winners: HashSet<_> = (0..count).collect();
 
     loop {
         match game_state.draw() {
             DrawResult::Bingo(winners) => {
                 for winner in winners.iter() {
-                    all_winners.insert(winner.board);
-                    println!("{:?} {}", &all_winners, winner.score);
-                    if all_winners.len() == count {
+                    all_winners.remove(&winner.board);
+                    // println!("{:?} {}", &all_winners, winner.score);
+                    if all_winners.is_empty() {
                         return winner.score;
                     }
                 }
@@ -125,17 +125,12 @@ impl GameState<'_> {
             self.round += 1;
             let mut winners = vec![];
             for b in 0..self.states.len() {
-                let board = &self.game.boards[b];
-                let state = &mut self.states[b];
-
-                if let Some(pos) = board.0.iter().position(|i| i == draw) {
-                    if let Some(bingo) = state.set(pos) {
-                        winners.push(Winner {
-                            board: b,
-                            bingo: bingo,
-                            score: state.sum_unmarked() * *draw as u32,
-                        });
-                    }
+                if let Some(bingo) = self.states[b].check_draw(*draw) {
+                    winners.push(Winner {
+                        board: b,
+                        bingo,
+                        score: self.states[b].sum_unmarked() * *draw as u32,
+                    });
                 }
             }
             if winners.len() > 0 {
@@ -165,16 +160,13 @@ struct Winner {
 
 #[derive(Clone, Copy)]
 struct BoardState<'a> {
-	state: u32,
-	board: &'a Board,
+    state: u32,
+    board: &'a Board,
 }
 
 impl BoardState<'_> {
     fn new<'a>(board: &'a Board) -> BoardState<'a> {
-        BoardState{ 
-			state: 0,
-			board
-		}
+        BoardState { state: 0, board }
     }
 
     fn sum_unmarked(&self) -> u32 {
@@ -185,6 +177,14 @@ impl BoardState<'_> {
             }
         }
         res
+    }
+
+    fn check_draw(&mut self, number: Number) -> Option<Bingo> {
+        self.board
+            .0
+            .iter()
+            .position(|&val| val == number)
+            .and_then(|pos| self.set(pos))
     }
 
     fn set(&mut self, n: usize) -> Option<Bingo> {

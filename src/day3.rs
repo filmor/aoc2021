@@ -45,6 +45,6 @@ pub fn solve_part1(input: &[u32]) -> u32 {
 }
 
 #[aoc(day3, part2)]
-pub fn solve_part2(input: &[u32]) -> u32 {
+pub fn solve_part2(_input: &[u32]) -> u32 {
     unimplemented!()
 }

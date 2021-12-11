@@ -8,5 +8,6 @@ mod day4;
 mod day6;
 
 mod day10;
+mod day11;
 
 aoc_lib! {year = 2021}

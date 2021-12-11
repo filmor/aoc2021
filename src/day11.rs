@@ -10,10 +10,10 @@ pub fn input_generator(s: &str) -> Field {
 #[aoc(day11, part1)]
 pub fn solve_part1(input: &Field) -> usize {
     let mut f = input.clone();
-	let mut res = 0;
-	for _ in 0..100 {
-		res += f.step();
-	}
+    let mut res = 0;
+    for _ in 0..100 {
+        res += f.step();
+    }
 
     res
 }
@@ -21,13 +21,16 @@ pub fn solve_part1(input: &Field) -> usize {
 #[aoc(day11, part2)]
 pub fn solve_part2(input: &Field) -> usize {
     let mut f = input.clone();
-	for i in 0.. {
-		if f.step() == f.data.len() {
-			return i + 1;
-		}
-	}
+    for i in 0.. {
+        // std::thread::sleep(std::time::Duration::from_millis(100));
+        // println!("{}", f);
+        if f.step() == f.data.len() {
+            // println!("{}", f);
+            return i + 1;
+        }
+    }
 
-	unreachable!()
+    unreachable!()
 }
 
 #[derive(Clone)]
@@ -77,11 +80,11 @@ impl Field {
             }
         }
 
-		for p in flashes.iter() {
-			if let Some(idx) = self.get_index(*p) {
-				self.data[idx] = 0;
-			}
-		}
+        for p in flashes.iter() {
+            if let Some(idx) = self.get_index(*p) {
+                self.data[idx] = 0;
+            }
+        }
 
         flashes.len()
     }
@@ -91,18 +94,18 @@ impl Field {
             return;
         }
 
-		if let Some(idx) = self.get_index(p) {
-			self.data[idx] += 1;
-			if self.data[idx] > 9 {
-				flashes.insert(p);
-				for d_x in -1..=1 {
-					for d_y in -1..=1 {
-						let p1 = (p.0 + d_x, p.1 + d_y);
-						self.maybe_flash(flashes, p1);
-					}
-				}
-			}
-		}
+        if let Some(idx) = self.get_index(p) {
+            self.data[idx] += 1;
+            if self.data[idx] > 9 {
+                flashes.insert(p);
+                for d_x in -1..=1 {
+                    for d_y in -1..=1 {
+                        let p1 = (p.0 + d_x, p.1 + d_y);
+                        self.maybe_flash(flashes, p1);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -110,7 +113,21 @@ impl Display for Field {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for i in 0..self.height as isize {
             for j in 0..self.width as isize {
-                write!(f, "{} ", self.get((i, j)).unwrap())?
+                let value = self.get((i, j)).unwrap();
+                let chr = if value == 0 || value == 1 {
+                    ' '
+                } else if value == 3 || value == 2 {
+                    '░'
+                } else if value == 5 || value == 4 {
+                    '▒'
+                } else if value == 7 || value == 6 {
+                    '▓'
+                } else if value == 9 || value == 8 {
+                    '█'
+                } else {
+                    unreachable!();
+                };
+                write!(f, "{}", chr)?
             }
             write!(f, "\n")?;
         }
